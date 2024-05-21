@@ -10,9 +10,10 @@ import (
 )
 
 type Expense struct {
-	Name  string `json:"name"`
-	Money int    `json:"money"`
-	Time  string `json:"time"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
+	Amount   int    `json:"amount"`
+	Date     string `json:"date"`
 }
 
 // DBFoodPath is the path to the namecard data in the database
