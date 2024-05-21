@@ -55,7 +55,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/callback", callbackHandler)
+	http.HandleFunc("/", callbackHandler)
 	port := os.Getenv("PORT")
 	addr := fmt.Sprintf(":%s", port)
 	http.ListenAndServe(addr, nil)
