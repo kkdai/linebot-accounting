@@ -16,8 +16,8 @@ type Expense struct {
 	Date     string `json:"date"`
 }
 
-// DBFoodPath is the path to the namecard data in the database
-const DBFoodPath = "accounting"
+// DBExpensePath is the path to the namecard data in the database
+const DBExpensePath = "accounting"
 
 // Define the context
 var fireDB FireDB

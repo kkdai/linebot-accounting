@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
@@ -75,13 +76,20 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 				uID = source.UserId
 			}
 			log.Println("User ID:", uID)
-			fireDB.SetPath(fmt.Sprintf("%s/%s", DBFoodPath, uID))
+			fireDB.SetPath(fmt.Sprintf("%s/%s", DBExpensePath, uID))
 
 			switch message := e.Message.(type) {
 			// Handle only on text message
 			case webhook.TextMessageContent:
 				// Get all food from firebase
-				replyText(e.ReplyToken, "收到文字訊息: "+message.Text)
+
+				// Get local time (Taipei)
+				timelocal, _ := time.LoadLocation("Asia/Taipei")
+				time.Local = timelocal
+				curNow := time.Now().Local().String()
+
+				response := gemini.GeminiFunctionCall(message.Text + " 本地時間: " + curNow)
+				replyText(e.ReplyToken, response)
 
 			// Handle only on Sticker message
 			case webhook.StickerMessageContent:

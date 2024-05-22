@@ -33,6 +33,10 @@ func InitGemini(key string) *GeminiApp {
 			Parameters: &genai.Schema{
 				Type: genai.TypeObject,
 				Properties: map[string]*genai.Schema{
+					"name": {
+						Type:        genai.TypeString,
+						Description: "The name of the expense",
+					},
 					"date": {
 						Type:        genai.TypeString,
 						Description: "The date of the expense in YYYY-MM-DD format",
@@ -43,10 +47,10 @@ func InitGemini(key string) *GeminiApp {
 					},
 					"category": {
 						Type:        genai.TypeString,
-						Description: "The category of the expense",
+						Description: "The category of the expense, it could be one of following (食, 衣, 住, 行)",
 					},
 				},
-				Required: []string{"date", "amount", "category"},
+				Required: []string{"name,", "date", "amount", "category"},
 			},
 		}},
 	}
@@ -129,6 +133,7 @@ func (app *GeminiApp) GeminiFunctionCall(prompt string) string {
 	case "recordExpense":
 		log.Println("Calling recordExpense function...")
 		args := part.(genai.FunctionCall).Args
+		name := args["name"]
 		date := args["date"]
 		amount := args["amount"]
 		category := args["category"]
@@ -136,7 +141,7 @@ func (app *GeminiApp) GeminiFunctionCall(prompt string) string {
 		log.Println("date: ", date, "amount: ", amount, "category: ", category)
 
 		// Call the hypothetical API to record the expense.
-		apiResult := recordExpense(date.(string), amount.(float64), category.(string))
+		apiResult := recordExpense(name.(string), date.(string), amount.(float64), category.(string))
 		// Send the hypothetical API result back to the generative model.
 		fmt.Printf("Sending API result:\n%q\n\n", apiResult)
 		resp, err = session.SendMessage(app.ctx, genai.FunctionResponse{
@@ -151,6 +156,7 @@ func (app *GeminiApp) GeminiFunctionCall(prompt string) string {
 		return printResponse(resp)
 	}
 
+	// If no function call was made, return the response as text.
 	return app.GeminiChatComplete(prompt)
 }
 
