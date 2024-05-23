@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
@@ -17,6 +18,7 @@ type GeminiApp struct {
 }
 
 var expenseTrackingTool *genai.Tool
+var expenseListingTool *genai.Tool
 
 // Init Gemini API
 func InitGemini(key string) *GeminiApp {
@@ -51,6 +53,26 @@ func InitGemini(key string) *GeminiApp {
 					},
 				},
 				Required: []string{"name,", "date", "amount", "category"},
+			},
+		}},
+	}
+
+	expenseListingTool = &genai.Tool{
+		FunctionDeclarations: []*genai.FunctionDeclaration{{
+			Name:        "listAllExpense",
+			Description: "List all expenses within a specific date range, or all expenses if no dates are specified",
+			Parameters: &genai.Schema{
+				Type: genai.TypeObject,
+				Properties: map[string]*genai.Schema{
+					"startDate": {
+						Type:        genai.TypeString,
+						Description: "Start date of the period in YYYY-MM-DD format (optional)",
+					},
+					"endDate": {
+						Type:        genai.TypeString,
+						Description: "End date of the period in YYYY-MM-DD format (optional)",
+					},
+				},
 			},
 		}},
 	}
@@ -100,11 +122,17 @@ func (app *GeminiApp) GeminiChatComplete(req string) string {
 
 // Gemini Function Call: Input a prompt and get the response string.
 func (app *GeminiApp) GeminiFunctionCall(prompt string) string {
+	// Add timestamp for this prompt.
+	timelocal, _ := time.LoadLocation("Asia/Taipei")
+	time.Local = timelocal
+	curNow := time.Now().Local().String()
+	prompt = prompt + " 本地時間: " + curNow
+
 	// Use a model that supports function calling, like Gemini 1.0 Pro.
 	model := app.client.GenerativeModel("gemini-1.5-flash-latest")
 
 	// Specify the function declaration.
-	model.Tools = []*genai.Tool{expenseTrackingTool}
+	model.Tools = []*genai.Tool{expenseTrackingTool, expenseListingTool}
 
 	// Start new chat session.
 	session := model.StartChat()
@@ -154,6 +182,26 @@ func (app *GeminiApp) GeminiFunctionCall(prompt string) string {
 
 		// Show the model's response, which is expected to be text.
 		return printResponse(resp)
+	case "listAllExpense":
+		log.Println("Calling recordExpense function...")
+		args := part.(genai.FunctionCall).Args
+		startDate := args["startDate"]
+		endDate := args["endDate"]
+		log.Println("startDate: ", startDate, " endDate: ", endDate)
+
+		// Call the hypothetical API to list all the expense.
+		apiResult := listAllExpense(startDate.(string), endDate.(string))
+
+		// Send the hypothetical API result back to the generative model.
+		fmt.Printf("Sending API result:\n%q\n\n", apiResult)
+		resp, err = session.SendMessage(app.ctx, genai.FunctionResponse{
+			Name:     expenseListingTool.FunctionDeclarations[0].Name,
+			Response: apiResult,
+		})
+		if err != nil {
+			log.Fatalf("Error sending message: %v\n", err)
+		}
+
 	}
 
 	// If no function call was made, return the response as text.
