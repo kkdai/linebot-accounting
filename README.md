@@ -5,7 +5,8 @@ LINE Bot 使用 Google Gemini Pro 來幫你記帳
 
 # LINE Bot Screen
 
-<
+![image](https://github.com/kkdai/linebot-accounting/assets/2252691/6d16f4f1-5571-4d6b-b9c7-aef28e53d72e)
+
 
 ## 如何快速架設在自己平台
 
